@@ -1,0 +1,57 @@
+# Crowding/Uncrowding experiment - Decoder training config
+# Train decoders on OUTSIDE images (vernier not inside flankers)
+# Then evaluate on INSIDE images to measure crowding/uncrowding effects
+
+task_type = "classification"
+
+[network]
+architecture_name = "resnet152_decoder"
+imagenet_pretrained = true
+state_dict_path = false
+batch_size = 64
+
+[training]
+train_id = "crowding_resnet152"
+learning_rate = 1e-5
+weight_decay = 0
+optimizers_path = false
+save_trained_model = true
+save_at_epoch_end = false
+evaluate_during_training = true
+
+[training.stopping_conditions]
+stop_after_n_epochs = 30
+stop_at_loss = false
+stop_at_accuracy = false
+
+[training.dataset]
+name = "outside_vernier"
+annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
+img_path_col_name = "Path"
+label_cols = "VernierType"
+filters = { VernierInOut = "outside" }
+
+[training.monitoring]
+neptune_proj_name = false
+
+# Evaluate on INSIDE images during training to monitor crowding effect
+[[eval.datasets]]
+name = "inside_vernier"
+annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
+img_path_col_name = "Path"
+label_cols = "VernierType"
+filters = { VernierInOut = "inside" }
+
+[saving_folders]
+results_folder = "results/decoder/crowding"
+model_output_folder = "models/decoder/crowding"
+
+[transformation]
+fill_color = [0, 0, 0]
+
+# No data augmentation - spatial relationships between vernier and flankers must be preserved
+[transformation.values]
+translation_X = false
+translation_Y = false
+scale = false
+rotation = false

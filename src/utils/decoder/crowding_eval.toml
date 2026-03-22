@@ -1,0 +1,44 @@
+# Crowding/Uncrowding experiment - Decoder evaluation config
+# Test trained decoders on INSIDE images to measure crowding/uncrowding effects
+
+task_type = "classification"
+
+[network]
+architecture_name = "resnet152_decoder"
+imagenet_pretrained = true
+state_dict_path = "models/decoder/crowding/crowding_resnet152/finished_model.pt"
+batch_size = 64
+
+[training.dataset]
+name = "outside_vernier"
+annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
+img_path_col_name = "Path"
+label_cols = "VernierType"
+filters = { VernierInOut = "outside" }
+
+[saving_folders]
+results_folder = "results/decoder/crowding/eval"
+
+# Test on INSIDE images
+[[eval.datasets]]
+name = "inside_vernier"
+annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
+img_path_col_name = "Path"
+label_cols = "VernierType"
+filters = { VernierInOut = "inside" }
+
+# Also test on OUTSIDE images to confirm training accuracy
+[[eval.datasets]]
+name = "outside_vernier_test"
+annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
+img_path_col_name = "Path"
+label_cols = "VernierType"
+filters = { VernierInOut = "outside" }
+
+[transformation]
+fill_color = [0, 0, 0]
+[transformation.values]
+translation_X = false
+translation_Y = false
+scale = false
+rotation = false

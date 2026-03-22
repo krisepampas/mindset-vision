@@ -1,0 +1,9 @@
+["low_mid_level_vision/un_crowding"]
+canvas_size = [224, 224]
+background_color = [0, 0, 0]
+antialiasing = false
+behaviour_if_present = "overwrite"
+num_samples_vernier_inside = 1000
+num_samples_vernier_outside = 5000
+random_size = true
+output_folder = "data/low_mid_level_vision/un_crowding"
