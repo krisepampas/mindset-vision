@@ -56,9 +56,7 @@ def decoder_evaluate(
             else len(toml_config["training"]["dataset"]["label_cols"])
         )
     elif toml_config["task_type"] == "classification":
-        num_classes = (
-            1 if isinstance(label_cols, str) else len(test_loaders[0].dataset.classes)
-        )
+        num_classes = len(test_loaders[0].dataset.classes)
 
     net, _, _ = GrabNet.get_net(
         toml_config["network"]["architecture_name"],
@@ -72,7 +70,14 @@ def decoder_evaluate(
         net_state_dict_path=toml_config["network"]["state_dict_path"],
         optimizers_path=None,
     )
-    net.eval()
+    net.train()
+
+    for param in net.parameters():
+        param.requires_grad = False
+    for param in net.decoders.parameters():
+        param.requires_grad = True
+
+
 
     net = to_global_device(net)
     results_folder = pathlib.Path(toml_config["saving_folders"]["results_folder"])
@@ -89,26 +94,27 @@ def decoder_evaluate(
             + sty.rs.fg
         )
 
-        for _, data in enumerate(tqdm(dataloader, colour="yellow")):
-            images, labels, path = data
-            images = to_global_device(images)
-            labels = to_global_device(labels)
-            out_dec = net(images)
-            for i in range(len(labels)):
-                results_final.append(
-                    {
-                        "image_path": path[i],
-                        "label": labels[i].item(),
-                        **{
-                            f"prediction_dec_{dec_idx}": (
-                                torch.argmax(out_dec[dec_idx][i]).item()
-                                if task_type == "classification"
-                                else out_dec[dec_idx][i].item()
-                            )
-                            for dec_idx in range(num_decoders)
-                        },
-                    }
-                )
+        with torch.no_grad():
+            for _, data in enumerate(tqdm(dataloader, colour="yellow")):
+                images, labels, path = data
+                images = to_global_device(images)
+                labels = to_global_device(labels)
+                out_dec = net(images)
+                for i in range(len(labels)):
+                    results_final.append(
+                        {
+                            "image_path": path[i],
+                            "label": labels[i].item(),
+                            **{
+                                f"prediction_dec_{dec_idx}": (
+                                    torch.argmax(out_dec[dec_idx][i]).item()
+                                    if task_type == "classification"
+                                    else out_dec[dec_idx][i].item()
+                                )
+                                for dec_idx in range(num_decoders)
+                            },
+                        }
+                    )
 
         results_final_pandas = pandas.DataFrame(results_final)
         result_path = str(results_folder / dataloader.dataset.name / "predictions.csv")
