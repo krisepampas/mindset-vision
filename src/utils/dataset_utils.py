@@ -235,11 +235,13 @@ def fix_dataset(dataset, transf_values, fill_color, name_ds=""):
 
 
 def get_dataloader(
+    toml_config,
     task_type,
     ds_config,
     transf_config,
     batch_size,
     return_path=False,
+    shuffle=False,
 ):
     ds = ImageDatasetAnnotations(
         task_type=task_type,
@@ -262,6 +264,7 @@ def get_dataloader(
         ds,
         batch_size=batch_size,
         drop_last=False,
+        shuffle=shuffle,
         num_workers=8 if torch.cuda.is_available() else 0,
         timeout=0,
         pin_memory=True,
