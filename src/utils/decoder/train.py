@@ -97,6 +97,7 @@ def decoder_train(
         ds_config=toml_config["training"]["dataset"],
         transf_config=toml_config["transformation"],
         batch_size=toml_config["network"]["batch_size"],
+        shuffle=True,
     )
 
     test_loaders = (
