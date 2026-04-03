@@ -377,7 +377,7 @@ class DrawUncrowding(DrawStimuli):
         self, full_patch: np.array = None, offset=None, offset_size=None
     ):
         if offset_size is None:
-            offset_size = random.randint(1, int(self.bar_height / 2.0))
+            offset_size = random.randint(1, 10)
 
         patch = np.array(
             self.create_canvas(

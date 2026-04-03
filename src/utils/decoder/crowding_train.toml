@@ -2,6 +2,8 @@
 # Train decoders on OUTSIDE images (vernier not inside flankers)
 # Then evaluate on INSIDE images to measure crowding/uncrowding effects
 
+# Crowding/Uncrowding experiment - Decoder training config
+
 task_type = "classification"
 
 [network]
@@ -29,12 +31,11 @@ name = "outside_vernier"
 annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
 img_path_col_name = "Path"
 label_cols = "VernierType"
-filters = { VernierInOut = "outside" }
+filters = { VernierInOut = "outside", Split = "train" }
 
 [training.monitoring]
 neptune_proj_name = false
 
-# Evaluate on INSIDE images during training to monitor crowding effect
 [[eval.datasets]]
 name = "inside_vernier"
 annotation_file = "data/low_mid_level_vision/un_crowding/annotation.csv"
@@ -49,7 +50,6 @@ model_output_folder = "models/decoder/crowding"
 [transformation]
 fill_color = [0, 0, 0]
 
-# No data augmentation - spatial relationships between vernier and flankers must be preserved
 [transformation.values]
 translation_X = false
 translation_Y = false

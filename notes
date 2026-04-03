@@ -1,0 +1,14 @@
+# 1. 生成数据（inside 10000 + outside 10000）
+python -m src.generate_datasets_from_toml my_crowding.toml
+
+# 2. 给 annotation.csv 加 Split 列（只跑一次）
+python split_data.py
+
+# 3. 训练（只用 70% outside）
+python -m src.utils.decoder.train --toml_config_path src/utils/decoder/crowding_train.toml
+
+# 4. 评估（30% outside 验证 + inside 测试）
+python -m src.utils.decoder.eval --toml_config_path src/utils/decoder/crowding_eval.toml
+
+# 5. 分析
+python analyze_crowding.py

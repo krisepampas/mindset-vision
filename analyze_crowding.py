@@ -9,9 +9,7 @@ import pandas as pd
 import numpy as np
 import os
 
-# ============================================================
 # 1. Load predictions
-# ============================================================
 inside_path = "results/decoder/crowding/eval/inside_vernier/predictions.csv"
 outside_path = "results/decoder/crowding/eval/outside_vernier_test/predictions.csv"
 
@@ -21,48 +19,49 @@ df_outside = pd.read_csv(outside_path)
 # Number of decoders
 num_decoders = len([c for c in df_inside.columns if c.startswith("prediction_dec_")])
 
-# ============================================================
+
 # 2. Overall accuracy per decoder (outside vs inside)
-# ============================================================
-print("=" * 60)
-print("OVERALL ACCURACY PER DECODER")
-print("=" * 60)
+print("\nOVERALL ACCURACY PER DECODER\n")
 print(f"{'Decoder':<12} {'Outside':>10} {'Inside':>10} {'Difference':>12}")
 print("-" * 46)
 
+overall_rows = []
 for i in range(num_decoders):
     col = f"prediction_dec_{i}"
     acc_out = (df_outside["label"] == df_outside[col]).mean()
     acc_in = (df_inside["label"] == df_inside[col]).mean()
     diff = acc_out - acc_in
     print(f"Decoder {i}:   {acc_out:>9.1%} {acc_in:>9.1%} {diff:>+11.1%}")
+    overall_rows.append({
+        "Decoder": f"dec_{i}",
+        "Outside": acc_out,
+        "Inside": acc_in,
+        "Difference": diff
+    })
 
-# ============================================================
+overall_df = pd.DataFrame(overall_rows)
+overall_path = "results/decoder/crowding/eval/overall_accuracy.csv"
+overall_df.to_csv(overall_path, index=False)
+
+
 # 3. Extract ShapeCode from image path
-# ============================================================
 def extract_shape_code(path):
     """Extract shape code from filename like 'inside/0/11111_0_abc123.png'"""
     filename = os.path.basename(path)
-    # Shape code is everything before the first underscore followed by a digit and underscore
     parts = filename.split("_")
     return parts[0]
 
 df_inside["ShapeCode"] = df_inside["image_path"].apply(extract_shape_code)
 
-# ============================================================
+
 # 4. Categorize flanker configurations
-# ============================================================
 def categorize_flanker(code):
     """Map ShapeCode to a human-readable category"""
     if code == "none":
         return "0_no_flanker"
     
-    # Remove 'nl' (newline markers for multi-row patterns) and count elements
     clean = code.replace("nl", "")
     num_elements = len(clean)
-    
-    # Check if all same shape
-    unique_shapes = set(clean)
     
     if num_elements == 1:
         return "1_single_flanker"
@@ -79,18 +78,15 @@ def categorize_flanker(code):
 
 df_inside["FlankerCategory"] = df_inside["ShapeCode"].apply(categorize_flanker)
 
-# ============================================================
+
 # 5. Accuracy per FlankerCategory per Decoder
-# ============================================================
-print("\n" + "=" * 60)
-print("ACCURACY BY FLANKER CONFIGURATION (per decoder)")
-print("=" * 60)
+print("\n\nACCURACY BY FLANKER CONFIGURATION (per decoder)\n")
 
 for i in range(num_decoders):
     col = f"prediction_dec_{i}"
     df_inside[f"correct_{i}"] = (df_inside["label"] == df_inside[col]).astype(int)
 
-print(f"\n{'Category':<22}", end="")
+print(f"{'Category':<22}", end="")
 for i in range(num_decoders):
     print(f"{'Dec_' + str(i):>8}", end="")
 print(f"{'Count':>8}")
@@ -104,21 +100,9 @@ for cat in sorted(df_inside["FlankerCategory"].unique()):
         print(f"{acc:>7.1%}", end="")
     print(f"{len(subset):>8}")
 
-# ============================================================
-# 6. Summary
-# ============================================================
-print("\n" + "=" * 60)
-print("INTERPRETATION GUIDE")
-print("=" * 60)
-print("- Outside acc high, Inside acc low = CROWDING effect")
-print("- Single flanker acc < No flanker acc = CROWDING")
-print("- Multi flanker acc > Single flanker acc = UNCROWDING")
-print("- If no uncrowding: model lacks Gestalt grouping ability")
 
-# ============================================================
-# 7. Save detailed results
-# ============================================================
-output_path = "results/decoder/crowding/eval/analysis_summary.csv"
+# 6. Save detailed results
+summary_path = "results/decoder/crowding/eval/analysis_summary.csv"
 summary_rows = []
 for cat in sorted(df_inside["FlankerCategory"].unique()):
     subset = df_inside[df_inside["FlankerCategory"] == cat]
@@ -128,5 +112,6 @@ for cat in sorted(df_inside["FlankerCategory"].unique()):
     summary_rows.append(row)
 
 summary_df = pd.DataFrame(summary_rows)
-summary_df.to_csv(output_path, index=False)
-print(f"\nDetailed results saved to: {output_path}")
+summary_df.to_csv(summary_path, index=False)
+
+print(f"\nResults saved to: {overall_path} and {summary_path}")
